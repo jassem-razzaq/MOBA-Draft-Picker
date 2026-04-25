@@ -100,7 +100,7 @@ def train_final_models(processor, game_df, metadata):
     nn = NeuralNetworkDraftModel()
     nn.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=128)
     results['neural_network'] = nn.evaluate(X_test, y_test)
-    nn.save("models/neural_network_model.keras")
+    nn.save("models/neural_network_model.pt")
 
     print("\n--- Always-Blue Baseline ---")
     baseline = AlwaysBlueBaseline()

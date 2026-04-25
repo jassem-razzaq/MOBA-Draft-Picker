@@ -200,10 +200,10 @@ def load_winner_model(model_type, vocab_size):
     """Load a winner model by type string."""
     if model_type == 'mlp':
         m = WinnerDraftMLPModel(vocab_size=vocab_size)
-        m.load("models/draft_mlp_winner.keras")
+        m.load("models/draft_mlp_winner.pt")
     elif model_type == 'lstm':
         m = WinnerDraftLSTMModel(vocab_size=vocab_size)
-        m.load("models/draft_lstm_winner.keras")
+        m.load("models/draft_lstm_winner.pt")
     elif model_type == 'xgb':
         m = WinnerDraftXGBModel(vocab_size=vocab_size)
         m.load("models/draft_xgb_winner.pkl")
@@ -237,8 +237,8 @@ def main():
         ('xgb',  'XGBoost'),
     ]:
         path_map = {
-            'mlp':  "models/draft_mlp_winner.keras",
-            'lstm': "models/draft_lstm_winner.keras",
+            'mlp':  "models/draft_mlp_winner.pt",
+            'lstm': "models/draft_lstm_winner.pt",
             'xgb':  "models/draft_xgb_winner.pkl",
         }
         if not os.path.exists(path_map[model_type]):
@@ -269,8 +269,8 @@ def main():
 
     # Cross-model matchups if all three exist
     all_exist = all(os.path.exists(p) for p in [
-        "models/draft_mlp_winner.keras",
-        "models/draft_lstm_winner.keras",
+        "models/draft_mlp_winner.pt",
+        "models/draft_lstm_winner.pt",
         "models/draft_xgb_winner.pkl",
     ])
     if all_exist:

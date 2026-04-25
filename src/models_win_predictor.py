@@ -1,19 +1,23 @@
 """
 Win probability models for League of Legends draft prediction.
 
-  AlwaysBlueBaseline    — trivial majority-class baseline
-  LogisticDraftModel    — L2-regularised logistic regression (SAGA solver)
-  XGBoostDraftModel     — gradient-boosted trees
-  NeuralNetworkDraftModel — three-layer feedforward network
+  AlwaysBlueBaseline      — trivial majority-class baseline
+  LogisticDraftModel      — L2-regularised logistic regression (SAGA solver)
+  XGBoostDraftModel       — gradient-boosted trees
+  NeuralNetworkDraftModel — three-layer feedforward network (PyTorch)
 """
 import numpy as np
 import xgboost as xgb
 import pickle
-from tensorflow import keras
-from tensorflow.keras import layers, models
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, log_loss, roc_auc_score,
                              classification_report)
+
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -149,52 +153,108 @@ class XGBoostDraftModel:
         print(f"Loaded from {path}")
 
 
-# ── Neural Network ────────────────────────────────────────────────────────────
+# ── Neural Network (PyTorch) ──────────────────────────────────────────────────
+
+class _FNN(nn.Module):
+    """Three-layer feedforward network: 512 → 256 → 128 → 1 (sigmoid)."""
+    def __init__(self, input_dim: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 512), nn.ReLU(),
+            nn.BatchNorm1d(512), nn.Dropout(0.3),
+            nn.Linear(512, 256), nn.ReLU(),
+            nn.BatchNorm1d(256), nn.Dropout(0.3),
+            nn.Linear(256, 128), nn.ReLU(),
+            nn.BatchNorm1d(128), nn.Dropout(0.2),
+            nn.Linear(128, 1), nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        return self.net(x).squeeze(1)
+
 
 class NeuralNetworkDraftModel:
     """Three-layer feedforward network (512→256→128) with BatchNorm and dropout."""
     def __init__(self):
         self.model = None
 
-    def build_model(self, input_dim: int):
-        return models.Sequential([
-            layers.Input(shape=(input_dim,)),
-            layers.Dense(512, activation='relu',
-                         kernel_regularizer=keras.regularizers.l2(0.001)),
-            layers.BatchNormalization(), layers.Dropout(0.3),
-            layers.Dense(256, activation='relu',
-                         kernel_regularizer=keras.regularizers.l2(0.001)),
-            layers.BatchNormalization(), layers.Dropout(0.3),
-            layers.Dense(128, activation='relu',
-                         kernel_regularizer=keras.regularizers.l2(0.001)),
-            layers.BatchNormalization(), layers.Dropout(0.2),
-            layers.Dense(1, activation='sigmoid'),
-        ])
-
     def train(self, X_train: np.ndarray, y_train: np.ndarray,
               X_val: np.ndarray, y_val: np.ndarray,
-              epochs: int = 50, batch_size: int = 128):
-        print("Building Neural Network...")
-        self.model = self.build_model(X_train.shape[1])
-        self.model.compile(optimizer=keras.optimizers.Adam(0.001),
-                           loss='binary_crossentropy', metrics=['accuracy'])
-        self.model.summary()
-        self.model.fit(
-            X_train, y_train, validation_data=(X_val, y_val),
-            epochs=epochs, batch_size=batch_size, verbose=1,
-            callbacks=[
-                keras.callbacks.EarlyStopping(monitor='val_loss', patience=10,
-                                              restore_best_weights=True),
-                keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
-                                                  patience=5, min_lr=1e-6),
-            ],
-        )
+              epochs: int = 50, batch_size: int = 128,
+              lr: float = 0.001, patience: int = 10):
+        print(f"Building Neural Network... (device: {DEVICE})")
+        self.model = _FNN(X_train.shape[1]).to(DEVICE)
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        return (self.model.predict(X, verbose=0).flatten() >= 0.5).astype(int)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, factor=0.5, patience=5, min_lr=1e-6)
+        criterion = nn.BCELoss()
+
+        # DataLoaders
+        train_ds = TensorDataset(
+            torch.tensor(X_train, dtype=torch.float32),
+            torch.tensor(y_train, dtype=torch.float32))
+        val_ds = TensorDataset(
+            torch.tensor(X_val, dtype=torch.float32),
+            torch.tensor(y_val, dtype=torch.float32))
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        val_loader   = DataLoader(val_ds,   batch_size=batch_size)
+
+        best_val_loss = float('inf')
+        best_state    = None
+        epochs_no_imp = 0
+
+        print("Training Neural Network...")
+        for epoch in range(1, epochs + 1):
+            # Training
+            self.model.train()
+            train_loss = 0.0
+            for Xb, yb in train_loader:
+                Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
+                optimizer.zero_grad()
+                loss = criterion(self.model(Xb), yb)
+                loss.backward()
+                optimizer.step()
+                train_loss += loss.item() * len(Xb)
+            train_loss /= len(train_ds)
+
+            # Validation
+            self.model.eval()
+            val_loss = 0.0
+            with torch.no_grad():
+                for Xb, yb in val_loader:
+                    Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
+                    val_loss += criterion(self.model(Xb), yb).item() * len(Xb)
+            val_loss /= len(val_ds)
+
+            scheduler.step(val_loss)
+            print(f"  Epoch {epoch:3d}/{epochs}  "
+                  f"train_loss={train_loss:.4f}  val_loss={val_loss:.4f}")
+
+            # Early stopping
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_state    = {k: v.cpu().clone() for k, v in
+                                 self.model.state_dict().items()}
+                epochs_no_imp = 0
+            else:
+                epochs_no_imp += 1
+                if epochs_no_imp >= patience:
+                    print(f"  Early stopping at epoch {epoch}")
+                    break
+
+        if best_state:
+            self.model.load_state_dict(best_state)
+        self.model.to(DEVICE)
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        return self.model.predict(X, verbose=0).flatten()
+        self.model.eval()
+        with torch.no_grad():
+            t = torch.tensor(X, dtype=torch.float32).to(DEVICE)
+            return self.model(t).cpu().numpy()
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return (self.predict_proba(X) >= 0.5).astype(int)
 
     def evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> dict:
         y_pred  = self.predict(X_test)
@@ -206,9 +266,14 @@ class NeuralNetworkDraftModel:
         return results
 
     def save(self, path: str):
-        self.model.save(path)
+        torch.save(self.model.state_dict(), path)
         print(f"Saved to {path}")
 
     def load(self, path: str):
-        self.model = keras.models.load_model(path)
+        # input_dim unknown at load time — caller must pass it or we infer from weights
+        state = torch.load(path, map_location=DEVICE)
+        input_dim = state['net.0.weight'].shape[1]
+        self.model = _FNN(input_dim).to(DEVICE)
+        self.model.load_state_dict(state)
+        self.model.eval()
         print(f"Loaded from {path}")

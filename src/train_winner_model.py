@@ -74,7 +74,7 @@ def train_all_winner_models():
               X_val,   pos_val_2d,   sides_val_2d,   y_val,
               sample_weight=weights, epochs=30, batch_size=256)
     results['mlp'] = mlp.evaluate(X_test, pos_test_2d, sides_test_2d, y_test)
-    mlp.save("models/draft_mlp_winner.keras")
+    mlp.save("models/draft_mlp_winner.pt")
 
     print("\n[4/5b] Training Winner LSTM...")
     lstm = WinnerDraftLSTMModel(vocab_size=vocab_size, embedding_dim=64, lstm_units=128)
@@ -82,7 +82,7 @@ def train_all_winner_models():
                X_val,   pos_val_2d,   sides_val_2d,   y_val,
                sample_weight=weights, epochs=30, batch_size=256)
     results['lstm'] = lstm.evaluate(X_test, pos_test_2d, sides_test_2d, y_test)
-    lstm.save("models/draft_lstm_winner.keras")
+    lstm.save("models/draft_lstm_winner.pt")
 
     print("\n[5/5] Training Winner XGBoost...")
     xgb_model = WinnerDraftXGBModel(vocab_size=vocab_size, max_depth=6,
