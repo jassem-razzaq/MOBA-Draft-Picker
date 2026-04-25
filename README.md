@@ -3,7 +3,6 @@
 A machine learning system for League of Legends professional draft analysis. The project trains a win probability model on completed team compositions and uses it to evaluate three winner-guided draft recommendation models.
 
 **Authors:** Grace Ou, Jassem Alabdulrazaq  
-**Course:** CS6140  
 **Dataset:** Oracle's Elixir — 2024 professional matches
 
 ---
