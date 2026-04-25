@@ -37,6 +37,7 @@ ML/
 ├── data/
 │   ├── metadata.pkl                      # Win predictor champion/patch encoders
 │   └── draft_metadata.pkl               # Draft model champion vocab
+├── requirements.txt
 └── models/
 
 ```
