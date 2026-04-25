@@ -32,13 +32,13 @@ ML/
 │   ├── adversarial_evaluation_winner.py  # Adversarial simulation + evaluation
 │   ├── plot_win_predictor_results.py     # Figures for win predictor results
 │   └── plot_draft_predictor_results.py   # Figures for draft predictor results
+│   └──Split2_2024.csv                   # Win predictor training data
+│   └── 2024.csv                          # Draft model training data
 ├── data/
 │   ├── metadata.pkl                      # Win predictor champion/patch encoders
 │   └── draft_metadata.pkl               # Draft model champion vocab
-├── models/
-└── src/
-    ├── Split2_2024.csv                   # Win predictor training data
-    └── 2024.csv                          # Draft model training data
+└── models/
+
 ```
 
 ---
