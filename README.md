@@ -3,7 +3,6 @@
 A machine learning system for League of Legends professional draft analysis. The project trains a win probability model on completed team compositions and uses it to evaluate three winner-guided draft recommendation models.
 
 **Authors:** Grace Ou, Jassem Alabdulrazaq  
-**Course:** CS6140  
 **Dataset:** Oracle's Elixir — 2024 professional matches
 
 ---
@@ -33,13 +32,14 @@ ML/
 │   ├── adversarial_evaluation_winner.py  # Adversarial simulation + evaluation
 │   ├── plot_win_predictor_results.py     # Figures for win predictor results
 │   └── plot_draft_predictor_results.py   # Figures for draft predictor results
+│   └──Split2_2024.csv                   # Win predictor training data
+│   └── 2024.csv                          # Draft model training data
 ├── data/
 │   ├── metadata.pkl                      # Win predictor champion/patch encoders
 │   └── draft_metadata.pkl               # Draft model champion vocab
-├── models/
-└── src/
-    ├── Split2_2024.csv                   # Win predictor training data
-    └── 2024.csv                          # Draft model training data
+├── requirements.txt
+└── models/
+
 ```
 
 ---
