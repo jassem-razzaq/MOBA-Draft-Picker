@@ -29,9 +29,9 @@ import numpy as np
 
 RESULTS = {
     'always_blue_baseline': {
-        'accuracy': 0.5273,   # = Blue win rate in test set
-        'auc':      0.5000,   # constant predictor has no discrimination
-        'log_loss': 0.6834,   # entropy of the Blue win rate
+        'accuracy': 0.5267,
+        'auc':      0.5000,
+        'log_loss': 0.6917,
     },
     'xgboost': {
         'accuracy': 0.5556,
@@ -39,9 +39,9 @@ RESULTS = {
         'log_loss': 0.6855,
     },
     'neural_network': {
-        'accuracy': 0.5628,
-        'auc':      0.5861,
-        'log_loss': 0.7431,
+        'accuracy': 0.4776,
+        'auc':      0.5661,
+        'log_loss': 0.6940,
     },
     'logistic': {
         'accuracy': 0.5758,

@@ -30,26 +30,26 @@ BASELINE = 0.4659   # Random vs Random mean Blue WP
 
 # Always-Blue baseline: LR model's expected score when compositions are
 # evaluated assuming Blue always wins — Blue win rate in test set ~52.7%
-ALWAYS_BLUE_WP = 0.5273   # always-blue baseline Blue win probability
-ALWAYS_RED_WP  = 1 - ALWAYS_BLUE_WP   # = 0.4727
+ALWAYS_BLUE_WP = 0.5267   # always-blue baseline Blue win probability
+ALWAYS_RED_WP  = 1 - ALWAYS_BLUE_WP   # = 0.4733
 
 RESULTS = {
     # (mean_blue_wp, blue_favored_pct, std)
-    'mlp_blue_vs_random':    (0.5451, 63.4, 0.141),
-    'random_vs_mlp_red':     (0.4787, 43.4, 0.141),
-    'mlp_vs_mlp':            (0.5213, 55.8, 0.141),
+    'mlp_blue_vs_random':    (0.5520, 65.0, 0.142),
+    'random_vs_mlp_red':     (0.4634, 38.4, 0.144),
+    'mlp_vs_mlp':            (0.5339, 61.2, 0.141),
 
-    'lstm_blue_vs_random':   (0.5428, 64.0, 0.134),
-    'random_vs_lstm_red':    (0.4703, 41.6, 0.139),
-    'lstm_vs_lstm':          (0.4941, 47.4, 0.152),
+    'lstm_blue_vs_random':   (0.5313, 59.8, 0.136),
+    'random_vs_lstm_red':    (0.4720, 40.4, 0.140),
+    'lstm_vs_lstm':          (0.4919, 46.0, 0.151),
 
-    'xgb_blue_vs_random':    (0.5660, 69.8, 0.130),
-    'random_vs_xgb_red':     (0.4707, 41.2, 0.149),
-    'xgb_vs_xgb':            (0.5188, 54.0, 0.147),
+    'xgb_blue_vs_random':    (0.5570, 67.0, 0.134),
+    'random_vs_xgb_red':     (0.4802, 42.8, 0.140),
+    'xgb_vs_xgb':            (0.5232, 54.4, 0.156),
 
-    'mlp_blue_vs_lstm_red':  (0.5388, 59.0, 0.150),
-    'mlp_blue_vs_xgb_red':   (0.5157, 54.0, 0.143),
-    'lstm_blue_vs_xgb_red':  (0.4881, 45.0, 0.145),
+    'mlp_blue_vs_lstm_red':  (0.5194, 52.4, 0.154),
+    'mlp_blue_vs_xgb_red':   (0.5139, 54.4, 0.153),
+    'lstm_blue_vs_xgb_red':  (0.4898, 45.6, 0.138),
 }
 
 # Colour palette — one colour per model + grey for random
